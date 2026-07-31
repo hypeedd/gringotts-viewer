@@ -135,6 +135,50 @@ function transformWikilinks(src, ctx) {
   });
 }
 
+/* ---- Math (KaTeX) --------------------------------------------------------- *
+   Pull $$…$$ and $…$ out BEFORE markdown so marked can't mangle the TeX
+   (underscores, carets, backslashes), then render into placeholders after.   */
+
+let _mathStore = [];
+
+function protectMath(src) {
+  _mathStore = [];
+  // Keep escaped \$ literal — swap to a token that survives everything.
+  src = src.replace(/\\\$/g, '\x06');
+  // Block/display math first, then inline. Guards avoid matching currency ($5 … $9).
+  src = src.replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => {
+    _mathStore.push({ tex: tex.trim(), display: true });
+    return `\x05M${_mathStore.length - 1}\x05`;
+  });
+  src = src.replace(/\$(?!\s)([^$\n]+?)(?<!\s)\$/g, (_, tex) => {
+    _mathStore.push({ tex: tex.trim(), display: false });
+    return `\x05M${_mathStore.length - 1}\x05`;
+  });
+  return src;
+}
+
+function restoreMath(container) {
+  if (!_mathStore.length) {
+    container.innerHTML = container.innerHTML.replace(/\x06/g, '$');
+    return;
+  }
+  let html = container.innerHTML;
+  html = html.replace(/\x05M(\d+)\x05/g, (_, i) => {
+    const item = _mathStore[+i];
+    if (!item) return '';
+    try {
+      return window.katex.renderToString(item.tex, {
+        displayMode: item.display, throwOnError: false, output: 'html',
+      });
+    } catch (e) {
+      const raw = (item.display ? '$$' : '$') + item.tex + (item.display ? '$$' : '$');
+      return `<code class="math-error" title="${escAttr(String(e.message || e))}">${escAttr(raw)}</code>`;
+    }
+  });
+  html = html.replace(/\x06/g, '$'); // restore escaped dollar signs
+  container.innerHTML = html;
+}
+
 /* ---- Post-processing on the DOM ------------------------------------------ */
 
 function finalizeDom(container) {
@@ -166,6 +210,7 @@ export function renderMarkdown(md, ctx) {
   configureMarked();
   _slugCounts = new Map();
   let src = md;
+  src = protectMath(src);          // pull TeX out before anything else touches it
   src = transformCallouts(src);
   src = transformEmbeds(src, ctx);
   src = transformWikilinks(src, ctx);
@@ -173,5 +218,6 @@ export function renderMarkdown(md, ctx) {
   container.className = 'md';
   container.innerHTML = marked.parse(src);
   finalizeDom(container);
+  restoreMath(container);          // render KaTeX into the placeholders
   return container;
 }

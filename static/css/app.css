@@ -291,6 +291,11 @@ body {
 .md .task-list-item { list-style: none; margin-left: -1.4em; display: flex; gap: 8px; align-items: flex-start; }
 .md .task-list-item input { margin-top: 4px; accent-color: var(--accent); }
 
+/* Math (KaTeX) */
+.md .katex { font-size: 1.06em; }
+.md .katex-display { margin: 1.1em 0; padding: 2px 2px 6px; overflow-x: auto; overflow-y: hidden; }
+.md .math-error { color: var(--c-attention); background: color-mix(in srgb, var(--c-attention) 10%, var(--sink)); border-color: color-mix(in srgb, var(--c-attention) 30%, var(--line)); }
+
 /* Inline + block code */
 .md code { font-family: var(--f-mono); font-size: 0.86em; background: var(--sink); padding: 1.5px 6px; border-radius: 5px; border: 1px solid var(--line); color: var(--accent-ink); }
 .md pre { position: relative; margin: 1.2em 0; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); overflow: hidden; }

@@ -79,6 +79,27 @@ systemctl --user enable --now gringotts-viewer.service
 It starts the viewer on login and restarts it on failure. Manage with
 `systemctl --user {status,restart,stop,disable} gringotts-viewer`.
 
+## Access from other devices (LAN)
+
+By default the server binds to `127.0.0.1` — this machine only. To reach it from
+other devices on your network, bind to all interfaces with `HOST=0.0.0.0`:
+
+- **One-off:** `HOST=0.0.0.0 ./run.sh`
+- **Systemd service:** set `Environment=HOST=0.0.0.0` in the unit, then
+  `systemctl --user daemon-reload && systemctl --user restart gringotts-viewer`
+
+Find this machine's LAN address with `hostname -I`, then open `http://<that-ip>:8765`
+from the other device.
+
+If a firewall is active (e.g. `ufw`), allow the port — scoping it to your subnet is safest:
+
+```bash
+sudo ufw allow from <your-subnet> to any port 8765 proto tcp   # e.g. 192.168.1.0/24
+```
+
+> ⚠️ This serves your vault **read-only and unauthenticated** to anyone on the network.
+> Only enable it on a network you trust. Revert with `HOST=127.0.0.1`.
+
 ## Third-party assets
 
 Vendored locally so the app runs offline with no build step:

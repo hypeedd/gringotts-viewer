@@ -1,0 +1,29 @@
+# Gringotts Vault Viewer — systemd user service (autostart on login).
+#
+# Install:
+#   1. Adjust the two paths below if your layout differs (%h is your home dir).
+#   2. mkdir -p ~/.config/systemd/user
+#   3. cp contrib/gringotts-viewer.service ~/.config/systemd/user/
+#   4. systemctl --user daemon-reload
+#   5. systemctl --user enable --now gringotts-viewer.service
+#
+# Then open http://127.0.0.1:8765
+
+[Unit]
+Description=Gringotts Vault Viewer — local Markdown vault reader
+Documentation=file:%h/dev/gringotts-viewer/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/dev/gringotts-viewer
+Environment=VAULT_PATH=%h/gringotts-vault
+Environment=HOST=127.0.0.1
+Environment=PORT=8765
+ExecStart=/usr/bin/python3 %h/dev/gringotts-viewer/server.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

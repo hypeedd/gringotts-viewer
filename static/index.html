@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gringotts Vault</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗝️</text></svg>" />
+  <link rel="stylesheet" href="/static/fonts/fonts.css" />
+  <link rel="stylesheet" href="/static/vendor/hljs-light.min.css" media="(prefers-color-scheme: light)" id="hljs-light" />
+  <link rel="stylesheet" href="/static/vendor/hljs-dark.min.css" media="(prefers-color-scheme: dark)" id="hljs-dark" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <button class="icon-btn only-mobile" id="btn-menu" aria-label="Open navigation">☰</button>
+    <a class="brand" href="#/" aria-label="Home">
+      <span class="brand-key">🗝</span>
+      <span class="brand-name">Gringotts <em>Vault</em></span>
+    </a>
+    <button class="omnibar" id="omnibar" aria-label="Search notes">
+      <span class="omnibar-icon">⌕</span>
+      <span class="omnibar-text">Search the vault</span>
+      <kbd class="omnibar-kbd">⌘K</kbd>
+    </button>
+    <nav class="topbar-actions">
+      <button class="icon-btn" id="btn-graph" title="Graph view" aria-label="Graph view">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="6" r="2.1"/><circle cx="13" cy="17" r="2.6"/><path d="M8 8l4 8M16 7l-3 9"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-theme" title="Toggle theme" aria-label="Toggle theme">
+        <span class="theme-glyph">◑</span>
+      </button>
+    </nav>
+  </header>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <!-- Left rail: search shortcut, folder tree, filters -->
+  <aside class="rail rail-left" id="rail-left" aria-label="Navigation">
+    <div class="rail-scroll">
+      <section class="tree-section">
+        <div class="rail-head">
+          <span>Vault</span>
+          <span class="rail-count" id="note-count">—</span>
+        </div>
+        <div class="tree" id="tree" role="tree"></div>
+      </section>
+
+      <section class="filters" id="filters">
+        <div class="rail-head collapsible" data-facet-toggle="type"><span>Type</span><span class="chevron">▾</span></div>
+        <div class="facet" id="facet-type" role="group"></div>
+        <div class="rail-head collapsible" data-facet-toggle="status"><span>Status</span><span class="chevron">▾</span></div>
+        <div class="facet" id="facet-status" role="group"></div>
+        <div class="rail-head collapsible" data-facet-toggle="tag"><span>Tags</span><span class="chevron">▾</span></div>
+        <div class="facet facet-tags" id="facet-tag" role="group"></div>
+        <button class="clear-filters" id="clear-filters" hidden>Clear filters</button>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Center reading pane -->
+  <main class="reader" id="reader" tabindex="-1">
+    <div class="reading-progress" id="reading-progress"></div>
+    <article class="doc" id="doc">
+      <!-- home / note / graph content injected here -->
+    </article>
+  </main>
+
+  <!-- Right rail: outline + connections -->
+  <aside class="rail rail-right" id="rail-right" aria-label="Connections">
+    <div class="rail-scroll">
+      <section class="conn-block" id="outline-block" hidden>
+        <div class="rail-head"><span>On this page</span></div>
+        <nav class="outline" id="outline"></nav>
+      </section>
+      <section class="conn-block" id="related-block" hidden>
+        <div class="rail-head"><span>Related</span></div>
+        <div class="linklist" id="related"></div>
+      </section>
+      <section class="conn-block" id="backlinks-block" hidden>
+        <div class="rail-head"><span>Backlinks</span> <span class="rail-count" id="backlinks-count"></span></div>
+        <div class="linklist" id="backlinks"></div>
+      </section>
+      <section class="conn-block" id="localgraph-block" hidden>
+        <div class="rail-head"><span>Local graph</span></div>
+        <canvas class="localgraph" id="localgraph" width="440" height="300"></canvas>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Command palette -->
+  <div class="palette-overlay" id="palette" hidden>
+    <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="palette-input-row">
+        <span class="palette-icon">⌕</span>
+        <input type="text" id="palette-input" placeholder="Jump to a note, or search everything…" autocomplete="off" spellcheck="false" />
+        <kbd class="palette-esc">esc</kbd>
+      </div>
+      <div class="palette-results" id="palette-results"></div>
+      <div class="palette-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>↵</kbd> open</span>
+        <span><span class="dot"></span> full-text search</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph overlay -->
+  <div class="graph-overlay" id="graph-overlay" hidden>
+    <div class="graph-head">
+      <h2>Vault Graph</h2>
+      <div class="graph-tools">
+        <select id="graph-color" aria-label="Color nodes by">
+          <option value="folder">Color by folder</option>
+          <option value="type">Color by type</option>
+        </select>
+        <button class="icon-btn" id="graph-close" aria-label="Close graph">✕</button>
+      </div>
+    </div>
+    <canvas id="graph-canvas"></canvas>
+    <div class="graph-hint" id="graph-hint">drag to pan · scroll to zoom · click a node to open</div>
+    <div class="graph-legend" id="graph-legend"></div>
+  </div>
+
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/vendor/highlight.min.js"></script>
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

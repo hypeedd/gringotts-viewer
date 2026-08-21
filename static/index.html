@@ -16,7 +16,15 @@
   <header class="topbar">
     <button class="icon-btn only-mobile" id="btn-menu" aria-label="Open navigation">☰</button>
     <a class="brand" href="#/" aria-label="Home">
-      <span class="brand-key">🗝</span>
+      <span class="brand-key" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="2.5"/>
+          <circle cx="11" cy="12" r="4.5"/>
+          <circle cx="11" cy="12" r="1.3" fill="currentColor" stroke="none"/>
+          <path d="M11 5.5V7M11 17v1.5M4.5 12H6m10 0h1.5M6.7 7.7l1 1M15.3 15.3l1 1M16.3 7.7l-1 1M7.7 15.3l-1 1"/>
+          <path d="M18 9v6"/>
+        </svg>
+      </span>
       <span class="brand-name">Gringotts <em>Vault</em></span>
     </a>
     <button class="omnibar" id="omnibar" aria-label="Search notes">

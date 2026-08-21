@@ -102,7 +102,7 @@ body {
   z-index: 40;
 }
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); flex-shrink: 0; }
-.brand-key { font-size: 18px; filter: saturate(0.9); }
+.brand-key { display: inline-flex; align-items: center; color: var(--accent-ink); }
 .brand-name { font-family: var(--f-display); font-weight: 500; font-size: 19px; letter-spacing: -0.01em; }
 .brand-name em { font-style: normal; color: var(--accent-ink); font-weight: 600; }
 

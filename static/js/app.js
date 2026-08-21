@@ -384,7 +384,14 @@ function wireChrome() {
   // Delegated clicks inside rendered notes.
   doc.addEventListener('click', (e) => {
     const wl = e.target.closest('a.wikilink');
-    if (wl && wl.dataset.rel) { e.preventDefault(); openNote(wl.dataset.rel); return; }
+    if (wl && wl.dataset.rel) {
+      e.preventDefault();
+      const rel = wl.dataset.rel;
+      // Assets (PDFs, images, media) aren't notes — open them via /api/asset.
+      if (isAsset(rel)) window.open(`/api/asset?path=${encodeURIComponent(rel)}`, '_blank', 'noopener');
+      else openNote(rel);
+      return;
+    }
     const anchor = e.target.closest('a.h-anchor');
     if (anchor) {
       e.preventDefault();
@@ -464,5 +471,8 @@ function setRightRail(show) {
 }
 
 /* utils */
+const ASSET_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico',
+  'pdf', 'mp4', 'webm', 'mp3', 'ogg', 'wav']);
+function isAsset(rel) { return ASSET_EXT.has((rel.split('.').pop() || '').toLowerCase()); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }

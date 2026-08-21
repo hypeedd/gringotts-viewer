@@ -24,6 +24,13 @@ IGNORE_DIRS = {".git", ".obsidian", ".claude", ".trash", "node_modules",
 # Individual meta files to hide (naming-convention / vault-organization docs).
 IGNORE_FILES = {"CLAUDE.md", "README.md"}
 
+# Asset (non-note) file types. Indexed so that wikilinks/embeds pointing at them
+# resolve — the server serves them via /api/asset. Keep in sync with server.ASSET_EXT.
+ASSET_EXT = {
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico",
+    ".pdf", ".mp4", ".webm", ".mp3", ".ogg", ".wav",
+}
+
 # Obsidian markdown patterns.
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 # Embeds first (leading !), then plain links. [[Target#heading|alias]]
@@ -145,10 +152,19 @@ class VaultIndex:
                 if fn.endswith(".md") and fn not in IGNORE_FILES:
                     yield Path(dirpath) / fn
 
+    def _iter_asset_files(self):
+        """Same tree walk / ignore rules as notes, but yielding asset files."""
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            dirnames[:] = [d for d in dirnames
+                           if d not in IGNORE_DIRS and not d.startswith(".") and not d.startswith("_")]
+            for fn in filenames:
+                if Path(fn).suffix.lower() in ASSET_EXT:
+                    yield Path(dirpath) / fn
+
     def _fingerprint(self) -> tuple:
         """A quick signature (paths + mtimes) to decide whether a rescan is needed."""
         items = []
-        for p in self._iter_md_files():
+        for p in (*self._iter_md_files(), *self._iter_asset_files()):
             try:
                 items.append((str(p), p.stat().st_mtime))
             except OSError:
@@ -233,6 +249,14 @@ class VaultIndex:
             by_name.setdefault(name.lower(), []).append(rel)
             by_rel_lower[rel.lower().removesuffix(".md")] = rel
 
+        # Register asset files so [[file.pdf]] / ![[image.png]] targets resolve.
+        # Assets aren't Notes (no graph node): they're keyed with their extension,
+        # so they never collide with a note's extension-less basename.
+        for path in self._iter_asset_files():
+            rel = path.relative_to(self.root).as_posix()
+            by_name.setdefault(path.name.lower(), []).append(rel)
+            by_rel_lower[rel.lower()] = rel
+
         # Resolve links now that every note is known.
         self.notes = notes
         self._by_name = by_name
@@ -264,7 +288,9 @@ class VaultIndex:
             for raw in note.out_targets:
                 tgt = self._resolve_target(raw)
                 if tgt and tgt != rel:
-                    if tgt not in seen:
+                    # Assets resolve (for embeds/links via linkMap) but stay out of
+                    # the note graph and backlinks — only notes are graph nodes.
+                    if tgt not in seen and tgt in self.notes:
                         seen.add(tgt)
                         resolved.append(tgt)
                         backlinks[tgt].add(rel)
